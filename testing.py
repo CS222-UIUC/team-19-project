@@ -6,6 +6,7 @@ from modules.pose_estimation import pose_estimation
 
 # For password storage 
 import unittest
+import requests
 from password_storage import PasswordStorage, read_passwords
 
 def test_pose_estimation(input_dir='pose', output_dir='pose_output', model_path='yolov8n-pose.pt', conf=0.3):
@@ -138,6 +139,81 @@ class TestPasswordStorage(unittest.TestCase):
         # Verify the output
         self.assertEqual(output, "No password file found.")
 
+
+# backend, dual ports password
+class TestPasswordServices(unittest.TestCase):
+    SET_PASSWORD_URL = "http://127.0.0.1:5000/set_password"
+    TRY_PASSWORD_URL = "http://127.0.0.1:5001/try_password"
+
+    def test_set_valid_password(self):
+        """Test setting a valid password."""
+        data = {"password": "1230"}
+        response = requests.post(self.SET_PASSWORD_URL, json=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok", "message": "密码已设置"})
+
+    def test_set_invalid_password(self):
+        """Test setting an invalid password."""
+        # Test password with incorrect length
+        data = {"password": "123"}
+        response = requests.post(self.SET_PASSWORD_URL, json=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"status": "error", "message": "密码必须是4位，仅包含0~3"})
+
+        # Test password with invalid characters
+        data = {"password": "12a4"}
+        response = requests.post(self.SET_PASSWORD_URL, json=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"status": "error", "message": "密码必须是4位，仅包含0~3"})
+
+    def test_try_password_before_set(self):
+        """Test trying a password before setting one."""
+        data = {"password": "1230"}
+        response = requests.post(self.TRY_PASSWORD_URL, json=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"status": "waiting", "message": "尚未设置密码，请稍后"})
+
+    def test_try_correct_password(self):
+        """Test trying the correct password."""
+        # First, set a valid password
+        set_data = {"password": "1230"}
+        requests.post(self.SET_PASSWORD_URL, json=set_data)
+
+        # Try the correct password
+        try_data = {"password": "1230"}
+        response = requests.post(self.TRY_PASSWORD_URL, json=try_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "success", "message": "密码正确！通过！"})
+
+    def test_try_incorrect_password(self):
+        """Test trying an incorrect password."""
+        # First, set a valid password
+        set_data = {"password": "1230"}
+        requests.post(self.SET_PASSWORD_URL, json=set_data)
+
+        # Try an incorrect password
+        try_data = {"password": "0000"}
+        response = requests.post(self.TRY_PASSWORD_URL, json=try_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "fail", "message": "密码错误，请重试"})
+
+    def test_try_invalid_password_format(self):
+        """Test trying a password with an invalid format."""
+        # First, set a valid password
+        set_data = {"password": "1230"}
+        requests.post(self.SET_PASSWORD_URL, json=set_data)
+
+        # Try a password with incorrect length
+        try_data = {"password": "123"}
+        response = requests.post(self.TRY_PASSWORD_URL, json=try_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"status": "error", "message": "尝试密码必须是4位，仅包含0~3"})
+
+        # Try a password with invalid characters
+        try_data = {"password": "12a4"}
+        response = requests.post(self.TRY_PASSWORD_URL, json=try_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"status": "error", "message": "尝试密码必须是4位，仅包含0~3"})
 
 if __name__ == "__main__":
     test_pose_estimation()

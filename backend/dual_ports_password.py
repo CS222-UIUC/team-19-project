@@ -40,6 +40,41 @@ def try_password():
         return jsonify({'status': 'fail', 'message': '密码错误，请重试'})
 
 
+# added password storage as txt
+class PasswordStorage:
+    def __init__(self, filename="passwords.txt"):
+        # Get the path to the Windows desktop
+        self.desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        self.file_path = os.path.join(self.desktop_path, filename)
+
+        # Create the file if it doesn't exist
+        if not os.path.exists(self.file_path):
+            with open(self.file_path, 'w') as file:
+                file.write("Stored Passwords:\n")
+
+    def store_password(self, password):
+        """Append a password to the file."""
+        with open(self.file_path, 'a') as file:
+            file.write(f"{password}\n")
+        print(f"Password '{password}' stored successfully.")
+
+def read_passwords(filename="passwords.txt"):
+    # Get the path to the Windows desktop
+    desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    file_path = os.path.join(desktop_path, filename)
+
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        print("No password file found.")
+        return
+
+    # Read and print the contents of the file
+    with open(file_path, 'r') as file:
+        print("Stored Passwords:")
+        for line in file.readlines():
+            print(line.strip())
+
+
 # 多线程启动两个服务
 def run_app1():
     app_set.run(port=5000)
@@ -48,6 +83,14 @@ def run_app2():
     app_try.run(port=5001)
 
 if __name__ == '__main__':
+    # Store dummy passwords
+    storage = PasswordStorage()
+    storage.store_password("1230")
+    storage.store_password("3210")
+    storage.store_password("0000")
+    read_passwords()
+
+    # main
     t1 = threading.Thread(target=run_app1)
     t2 = threading.Thread(target=run_app2)
     t1.start()
