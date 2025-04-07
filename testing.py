@@ -8,6 +8,8 @@ from modules.pose_estimation import pose_estimation
 import unittest
 import requests
 from password_storage import PasswordStorage, read_passwords
+import builtins
+from unittest.mock import patch
 
 def test_pose_estimation(input_dir='pose', output_dir='pose_output', model_path='yolov8n-pose.pt', conf=0.3):
     if not os.path.exists(input_dir):
@@ -214,6 +216,52 @@ class TestPasswordServices(unittest.TestCase):
         response = requests.post(self.TRY_PASSWORD_URL, json=try_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {"status": "error", "message": "尝试密码必须是4位，仅包含0~3"})
+
+
+class TestPasswordSetter_Checker(unittest.TestCase):
+
+    def setUp(self):
+        password_storage['password'] = None
+        password_storage['submitted'] = False
+
+    @patch('builtins.input', side_effect=['1234', 'exit'])
+    @patch('builtins.print')
+    def test_password_setter_valid_input(self, mock_print, mock_input):
+        terminal_password_setter()
+        self.assertEqual(password_storage['password'], '1234')
+        self.assertTrue(password_storage['submitted'])
+
+    @patch('builtins.input', side_effect=['abcd', '4321', 'exit'])
+    @patch('builtins.print')
+    def test_password_setter_invalid_then_valid(self, mock_print, mock_input):
+        terminal_password_setter()
+        self.assertEqual(password_storage['password'], '4321')
+        self.assertTrue(password_storage['submitted'])
+
+    @patch('builtins.input', side_effect=['exit'])
+    @patch('builtins.print')
+    def test_password_checker_waits_for_submission(self, mock_print, mock_input):
+        # Password not submitted
+        terminal_password_checker()
+        # Should print waiting at least once
+        self.assertIn(('Waiting for password to be set...'), [call.args[0] for call in mock_print.call_args_list])
+
+    @patch('builtins.input', side_effect=['1234', 'exit'])
+    @patch('builtins.print')
+    def test_password_checker_correct(self, mock_print, mock_input):
+        password_storage['password'] = '1234'
+        password_storage['submitted'] = True
+        terminal_password_checker()
+        self.assertIn(('TRUE - Correct password!'), [call.args[0] for call in mock_print.call_args_list])
+
+    @patch('builtins.input', side_effect=['0000', 'exit'])
+    @patch('builtins.print')
+    def test_password_checker_wrong(self, mock_print, mock_input):
+        password_storage['password'] = '1234'
+        password_storage['submitted'] = True
+        terminal_password_checker()
+        self.assertIn(('FALSE - Wrong password'), [call.args[0] for call in mock_print.call_args_list])
+    
 
 if __name__ == "__main__":
     test_pose_estimation()
