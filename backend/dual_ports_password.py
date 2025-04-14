@@ -42,6 +42,8 @@ def try_password():
         return jsonify({'status': 'fail', 'message': 'Wrong password'})
 
 # Terminal-based password setter (new this week)
+terminal_password_storage = {'password': '', 'submitted': False}
+
 def terminal_password_setter():
     print("Terminal password setter running (type 'exit' to quit)")
     while True:
@@ -52,31 +54,28 @@ def terminal_password_setter():
             if len(pwd) != 4 or not all(c in '0123' for c in pwd):
                 print("Invalid password format")
                 continue
-            password_storage['password'] = pwd
-            password_storage['submitted'] = True
+            terminal_password_storage['password'] = pwd  # <-- Use terminal storage
+            terminal_password_storage['submitted'] = True
             print(f"Password set to: {pwd}")
         except KeyboardInterrupt:
             break
     print("Password setter exiting")
 
-# Terminal-based password checker
 def terminal_password_checker():
     print("Terminal password checker running (type 'exit' to quit)")
     while True:
         try:
-            if not password_storage['submitted']:
+            if not terminal_password_storage['submitted']:  # <-- Check terminal storage
                 print("Waiting for password to be set...")
                 threading.Event().wait(1) 
                 continue
-
             attempt = input("Enter password attempt: ").strip()
             if attempt.lower() == 'exit':
                 break
             if len(attempt) != 4 or not all(c in '0123' for c in attempt):
                 print("Invalid attempt format")
                 continue
-
-            if attempt == password_storage['password']:
+            if attempt == terminal_password_storage['password']:  # <-- Compare with terminal storage
                 print("TRUE - Correct password!")
             else:
                 print("FALSE - Wrong password")

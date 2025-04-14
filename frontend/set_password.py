@@ -39,6 +39,26 @@ set_password_html =
             document.getElementById("result").innerText = "错误：" + error;
         });
     });
+
+    document.getElementById("tryForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        var password = document.getElementById("password").value;
+        fetch("http://localhost:8000/check_password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({password: password})
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("result").innerText = 
+                data.status === 'success' ? 
+                (data.result ? "✅ Correct!" : "❌ Wrong!") : 
+                "Error: " + data.message;
+        })
+        .catch(error => {
+            document.getElementById("result").innerText = "Error: " + error;
+        });
+    });
     </script>
 </body>
 </html>
@@ -47,22 +67,54 @@ set_password_html =
 # 输入密码页面的 HTML 
 
 
-# 首页提供两个入口链接
+app = Flask(__name__)
+
+# Web-only password storage
+web_password_storage = {'password': '', 'submitted': False}
+
+# Your existing HTML routes (unchanged)
 @app.route('/')
 def index():
-    return 
+    return "Welcome! Use /set to set a password or /try to check one."
 
-'''
-# 路由：显示设置密码页面
 @app.route('/set')
 def set_page():
     return render_template_string(set_password_html)
 
-# 路由：显示输入密码页面
 @app.route('/try')
 def try_page():
     return render_template_string(try_password_html)
 
+# New: Handle password setting from web
+@app.route('/set_password', methods=['POST'])
+def set_password():
+    data = request.get_json()
+    pwd = data.get('password', '')
+    
+    if len(pwd) == 4 and all(c in '0123' for c in pwd):
+        web_password_storage['password'] = pwd  # <-- Store in web storage
+        web_password_storage['submitted'] = True
+        return {'status': 'success', 'message': f'Password set to: {pwd}'}
+    else:
+        return {'status': 'error', 'message': 'Invalid password format'}, 400
+
+# New: Handle password checking from web
+@app.route('/check_password', methods=['POST'])
+def check_password():
+    if not web_password_storage['submitted']:
+        return {'status': 'error', 'message': 'No password set yet'}, 400
+    
+    data = request.get_json()
+    attempt = data.get('password', '')
+    
+    if len(attempt) != 4 or not all(c in '0123' for c in attempt):
+        return {'status': 'error', 'message': 'Invalid attempt format'}, 400
+    
+    if attempt == web_password_storage['password']:
+        return {'status': 'success', 'result': True}
+    else:
+        return {'status': 'success', 'result': False}
+
 if __name__ == '__main__':
-    # 前端服务运行在8000端口
+    # Run web interface on port 8000
     app.run(port=8000)
