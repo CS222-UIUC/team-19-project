@@ -86,8 +86,8 @@ def terminal_password_checker():
 # JSON storage class
 class PasswordStorage:
     def __init__(self, filename="passwords.json"):
-        self.desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-        self.file_path = os.path.join(self.desktop_path, filename)
+        # Get the directory where the script is located
+        self.file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
         if not os.path.exists(self.file_path):
             with open(self.file_path, 'w') as file:
                 json.dump({"passwords": []}, file)
@@ -104,8 +104,8 @@ class PasswordStorage:
             print(f"Error storing password: {e}")
 
 def read_passwords(filename="passwords.json"):
-    desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-    file_path = os.path.join(desktop_path, filename)
+    # Get the directory where the script is located
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
     if not os.path.exists(file_path):
         print("No password file found.")
         return
