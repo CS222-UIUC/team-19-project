@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 @app.route("/upload", methods=["POST"])
 def upload_checkpassword():
+    print("Received upload request from:", request.remote_addr)
     try:
         data = request.get_json()
         if not data or "password" not in data:
