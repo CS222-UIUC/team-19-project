@@ -6,12 +6,12 @@ from modules.camera_with_pose import real_time_pose_estimation
 def main():
     # 测试人物检测功能
     print("开始人物检测...")
-    imagepath = 'c:/CSproject/YOLO/CVonhumanPose/pose/237462ea677b8038aab58ce221262fc.jpg'
+    imagepath = 'pose/237462ea677b8038aab58ce221262fc.jpg'
 
     detect_people_in_image(
         image_path=imagepath,
         model_path='yolov8l.pt',
-        output_dir='c:/CSproject/YOLO/CVonhumanPose/people_output',
+        output_dir='people_output',
         conf=0.25
     )
 
@@ -20,7 +20,7 @@ def main():
     pose_estimation(
         image_path=imagepath,
         model_path='yolov8n-pose.pt',
-        output_dir='c:/CSproject/YOLO/CVonhumanPose/pose_output',
+        output_dir='pose_output',
         conf=0.3
     )
 
