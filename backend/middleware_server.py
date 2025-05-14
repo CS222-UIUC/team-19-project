@@ -5,6 +5,9 @@ import json
 import os
 from flask import Flask, request, jsonify
 
+## ip used when testing in demo
+## app.run(host="10.186.9.140", port=5000)
+
 # ------------------ Flask Server Part ------------------ #
 app = Flask(__name__)
 

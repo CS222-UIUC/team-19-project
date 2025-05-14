@@ -5,11 +5,15 @@ import time
 import json
 import os
 import requests
+
+# wasn't sure
+import numpy
+
 # 存储数字序列和定时器
 sequence = ""
 last_saved_time = 0
-output_path = r"C:\CSproject\yolo\CVonhumanPose\backend\checkpassword.json"
 SERVER_IP = "http://10.186.9.140:5000/upload"
+output_path = r"backend/checkpassword.json"
 
 def draw_simplified_pose(image, keypoints, confidence_threshold=0.5):
     """
